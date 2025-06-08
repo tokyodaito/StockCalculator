@@ -1,0 +1,75 @@
+{
+"securities": {
+	"metadata": {
+		"SECID": {"type": "string", "bytes": 36, "max_size": 0},
+		"BOARDID": {"type": "string", "bytes": 12, "max_size": 0},
+		"NAME": {"type": "string", "bytes": 384, "max_size": 0},
+		"DECIMALS": {"type": "int32"},
+		"SHORTNAME": {"type": "string", "bytes": 192, "max_size": 0},
+		"ANNUALHIGH": {"type": "double"},
+		"ANNUALLOW": {"type": "double"},
+		"CURRENCYID": {"type": "string", "bytes": 12, "max_size": 0},
+		"CALCMODE": {"type": "string", "bytes": 36, "max_size": 0}
+	},
+	"columns": ["SECID", "BOARDID", "NAME", "DECIMALS", "SHORTNAME", "ANNUALHIGH", "ANNUALLOW", "CURRENCYID", "CALCMODE"], 
+	"data": [
+		["IMOEX", "SNDX", "Индекс МосБиржи", 2, "Индекс МосБиржи", 3371.06, 2370.28, "RUB", null]
+	]
+},
+"marketdata": {
+	"metadata": {
+		"SECID": {"type": "string", "bytes": 36, "max_size": 0},
+		"BOARDID": {"type": "string", "bytes": 12, "max_size": 0},
+		"LASTVALUE": {"type": "double"},
+		"OPENVALUE": {"type": "double"},
+		"CURRENTVALUE": {"type": "double"},
+		"LASTCHANGE": {"type": "double"},
+		"LASTCHANGETOOPENPRC": {"type": "double"},
+		"LASTCHANGETOOPEN": {"type": "double"},
+		"UPDATETIME": {"type": "time", "bytes": 10, "max_size": 0},
+		"LASTCHANGEPRC": {"type": "double"},
+		"VALTODAY": {"type": "double"},
+		"MONTHCHANGEPRC": {"type": "double"},
+		"YEARCHANGEPRC": {"type": "double"},
+		"SEQNUM": {"type": "int64"},
+		"SYSTIME": {"type": "datetime", "bytes": 19, "max_size": 0},
+		"TIME": {"type": "time", "bytes": 10, "max_size": 0},
+		"VALTODAY_USD": {"type": "double"},
+		"LASTCHANGEBP": {"type": "double"},
+		"MONTHCHANGEBP": {"type": "double"},
+		"YEARCHANGEBP": {"type": "double"},
+		"CAPITALIZATION": {"type": "double"},
+		"CAPITALIZATION_USD": {"type": "double"},
+		"HIGH": {"type": "double"},
+		"LOW": {"type": "double"},
+		"TRADEDATE": {"type": "date", "bytes": 10, "max_size": 0},
+		"TRADINGSESSION": {"type": "string", "bytes": 3, "max_size": 0},
+		"VOLTODAY": {"type": "double"}
+	},
+	"columns": ["SECID", "BOARDID", "LASTVALUE", "OPENVALUE", "CURRENTVALUE", "LASTCHANGE", "LASTCHANGETOOPENPRC", "LASTCHANGETOOPEN", "UPDATETIME", "LASTCHANGEPRC", "VALTODAY", "MONTHCHANGEPRC", "YEARCHANGEPRC", "SEQNUM", "SYSTIME", "TIME", "VALTODAY_USD", "LASTCHANGEBP", "MONTHCHANGEBP", "YEARCHANGEBP", "CAPITALIZATION", "CAPITALIZATION_USD", "HIGH", "LOW", "TRADEDATE", "TRADINGSESSION", "VOLTODAY"], 
+	"data": [
+		["IMOEX", "SNDX", 2856.61, 2856.63, 2786.16, -70.45, -2.47, -70.47, "18:51:01", -2.47, 154530227785.00, -1.51, -3.36, 20250606185101, "2025-06-06 18:51:01", "18:50:00", 1952934361.19, -7045, -4267, -9688, 6199858509656, 78353063291.20706, 2910.52, 2784, "2025-06-06", "1", null]
+	]
+},
+"dataversion": {
+	"metadata": {
+		"data_version": {"type": "int32"},
+		"seqnum": {"type": "int64"},
+		"trade_date": {"type": "date", "bytes": 10, "max_size": 0},
+		"trade_session_date": {"type": "date", "bytes": 10, "max_size": 0}
+	},
+	"columns": ["data_version", "seqnum", "trade_date", "trade_session_date"], 
+	"data": [
+		[8538, 20250608031001, "2025-06-06", "2025-06-06"]
+	]
+},
+"marketdata_yields": {
+	"metadata": {
+		"boardid": {"type": "string", "bytes": 12, "max_size": 0},
+		"secid": {"type": "string", "bytes": 36, "max_size": 0}
+	},
+	"columns": ["boardid", "secid"], 
+	"data": [
+
+	]
+}}

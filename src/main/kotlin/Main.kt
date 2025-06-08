@@ -2,6 +2,8 @@ package org.example
 
 import java.time.LocalDate
 
+import org.example.MoexClient
+
 // Фаза 0: Настройки стратегии (без ребаланса и плеча)
 object StrategyConfig {
     const val MONTHLY_FLOW          = 100_000.0    // ежемесячный приток ₽
@@ -92,15 +94,7 @@ object Strategy {
 
 // Пример использования:
 fun main() {
-    val market = MarketData(
-        price    = 2650.0,
-        max52    = 3000.0,
-        sma200   = 2700.0,
-        rsi14    = 28.0,
-        pe       = 6.3,
-        dy       = 13.0,
-        ofzYield = 10.5
-    )
+    val market = MoexClient.fetchMarketData()
     val portfolio = Portfolio(
         equity        = 700_000.0,
         others        = 300_000.0,
