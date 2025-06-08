@@ -11,17 +11,6 @@ object StrategyConfig {
     const val MIN_CUSHION_RATIO     = 3.0          // минимум: подушка ≥ 3× месячный поток
 }
 
-// Данные рынка на текущую дату
-data class MarketData(
-    val price: Double,    // текущая цена IMOEX
-    val max52: Double,    // максимум за 52 дня
-    val sma200: Double,   // 200-дневная SMA
-    val rsi14: Double,    // RSI(14)
-    val pe: Double,       // P/E рынка
-    val dy: Double,       // дивидендная доходность рынка, %
-    val ofzYield: Double  // доходность ОФЗ-10, %
-)
-
 // Портфель пользователя
 data class Portfolio(
     var equity: Double,       // сумма в акциях
