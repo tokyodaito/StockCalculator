@@ -26,7 +26,7 @@ object MoexClient {
     private val json   = Json { ignoreUnknownKeys = true }
 
     fun fetchMarketData(): MarketData {
-        val base  = "https://iss.moex.com/iss"
+        val base  = System.getProperty("moex.base") ?: "https://iss.moex.com/iss"
         val today = LocalDate.now()
         // Запрашиваем 365 календарных дней, чтобы гарантированно получить ≥200 торговых дней
         val from  = today.minusDays(365)
