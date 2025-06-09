@@ -16,10 +16,11 @@ class StrategyTest {
 
     @Test
     fun testEnhancedTrancheLevels() {
-        assertEquals(0.0, Strategy.enhancedTranche(-5.0))
-        assertEquals(StrategyConfig.BASE_DCA_AMOUNT, Strategy.enhancedTranche(-15.0))
-        assertEquals(1.5 * StrategyConfig.BASE_DCA_AMOUNT, Strategy.enhancedTranche(-25.0))
-        assertEquals(2.0 * StrategyConfig.BASE_DCA_AMOUNT, Strategy.enhancedTranche(-35.0))
+        val config = StrategyConfig()
+        assertEquals(0.0, Strategy.enhancedTranche(-5.0, config))
+        assertEquals(config.baseDcaAmount, Strategy.enhancedTranche(-15.0, config))
+        assertEquals(1.5 * config.baseDcaAmount, Strategy.enhancedTranche(-25.0, config))
+        assertEquals(2.0 * config.baseDcaAmount, Strategy.enhancedTranche(-35.0, config))
     }
 
     @Test
@@ -38,7 +39,8 @@ class StrategyTest {
             others = 300_000.0,
             cushionAmount = 300_000.0
         )
-        val actions = Strategy.evaluate(java.time.LocalDate.of(2025, 6, 10), market, portfolio)
+        val config = StrategyConfig()
+        val actions = Strategy.evaluate(java.time.LocalDate.of(2025, 6, 10), market, portfolio, config)
         assertTrue(actions.any { it is Action.Dca })
     }
 }
