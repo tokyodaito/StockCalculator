@@ -5,11 +5,11 @@ import kotlinx.coroutines.runBlocking
 import org.example.di.AppModule
 import java.time.LocalDate
 
-object StrategyConfig {
-    const val MONTHLY_FLOW          = 100_000.0    // ежемесячный приток ₽
-    const val BASE_DCA_AMOUNT       = 50_000.0     // базовая сумма DCA (модель 50/50)
-    const val MIN_CUSHION_RATIO     = 3.0          // минимум: подушка ≥ 3× месячный поток
-}
+data class StrategyConfig(
+    val monthlyFlow: Double = 100_000.0,
+    val baseDcaAmount: Double = 50_000.0,
+    val minCushionRatio: Double = 3.0
+)
 
 // Портфель пользователя
 data class Portfolio(
@@ -35,34 +35,34 @@ object Strategy {
         (m.price - m.max52) / m.max52 * 100.0
 
     // k × BASE_DCA_AMOUNT в зависимости от Δ
-    fun enhancedTranche(delta: Double): Double = when {
-        delta <= -30.0 -> 2.0 * StrategyConfig.BASE_DCA_AMOUNT
-        delta <= -20.0 -> 1.5 * StrategyConfig.BASE_DCA_AMOUNT
-        delta <= -10.0 -> 1.0 * StrategyConfig.BASE_DCA_AMOUNT
+    fun enhancedTranche(delta: Double, config: StrategyConfig): Double = when {
+        delta <= -30.0 -> 2.0 * config.baseDcaAmount
+        delta <= -20.0 -> 1.5 * config.baseDcaAmount
+        delta <= -10.0 -> 1.0 * config.baseDcaAmount
         else           -> 0.0
     }
 
     // Генерация статусов четырех базовых фильтров
-    fun getFilterStatuses(m: MarketData, p: Portfolio): List<FilterStatus> {
+    fun getFilterStatuses(m: MarketData, p: Portfolio, config: StrategyConfig): List<FilterStatus> {
         val techOk    = m.price >= m.sma200 || m.rsi14 < 30.0
         val peOk      = m.pe <= 6.6
         val dyOk      = m.dy >= m.ofzYield + 2.0
-        val cushionOk = p.cushionAmount / StrategyConfig.MONTHLY_FLOW >= StrategyConfig.MIN_CUSHION_RATIO
+        val cushionOk = p.cushionAmount / config.monthlyFlow >= config.minCushionRatio
 
         return listOf(
             FilterStatus("Технический (P ≥ SMA200 или RSI14 < 30)", techOk),
             FilterStatus("Оценка P/E ≤ 6,6×", peOk),
             FilterStatus("Дивдоходность ≥ OFZ-10 + 2 п.п.", dyOk),
-            FilterStatus("Подушка ≥ 3× месячный поток", cushionOk)
+            FilterStatus("Подушка ≥ ${config.minCushionRatio}× месячный поток", cushionOk)
         )
     }
 
     // Проверка, что все фильтры пройдены
-    fun passRiskFilters(m: MarketData, p: Portfolio): Boolean =
-        getFilterStatuses(m, p).all { it.passed }
+    fun passRiskFilters(m: MarketData, p: Portfolio, config: StrategyConfig): Boolean =
+        getFilterStatuses(m, p, config).all { it.passed }
 
     // Возвращает список действий на сегодня
-    fun evaluate(date: LocalDate, m: MarketData, p: Portfolio): List<Action> {
+    fun evaluate(date: LocalDate, m: MarketData, p: Portfolio, config: StrategyConfig): List<Action> {
         val actions = mutableListOf<Action>()
 
         // Фаза 1: базовый DCA 10-го числа
@@ -72,8 +72,8 @@ object Strategy {
 
         // Фазы 2+3: усиленный транш при просадке и прохождении фильтров
         val d = delta(m)
-        val tranche = enhancedTranche(d)
-        if (tranche > 0.0 && passRiskFilters(m, p)) {
+        val tranche = enhancedTranche(d, config)
+        if (tranche > 0.0 && passRiskFilters(m, p, config)) {
             actions.add(Action.Enhanced(tranche))
         }
 
@@ -84,29 +84,28 @@ object Strategy {
 // Пример использования:
 fun main() {
     runBlocking {
+        val config = StrategyConfig()
         val market = AppModule.dataSource.fetchMarketData()
         val portfolio = Portfolio(
             equity = 700_000.0,
             others = 300_000.0,
-            cushionAmount = 300_000.0  // три месячных потока
+            cushionAmount = 300_000.0
         )
         val today = LocalDate.of(2025, 6, 10)
 
-        // Отобразить статусы фильтров
         println("Статусы базовых фильтров риска:")
-        Strategy.getFilterStatuses(market, portfolio).forEach { status ->
+        Strategy.getFilterStatuses(market, portfolio, config).forEach { status ->
             println("${status.name}: ${if (status.passed) "✔" else "✘"}")
         }
 
-        // Оценить и выполнить действия
-        val actions = Strategy.evaluate(today, market, portfolio)
+        val actions = Strategy.evaluate(today, market, portfolio, config)
         if (actions.isEmpty()) {
             println("Покупки не требуются")
         } else {
             for (action in actions) {
                 when (action) {
                     is Action.Dca ->
-                        println("Выполнить базовый DCA: ${StrategyConfig.BASE_DCA_AMOUNT} ₽")
+                        println("Выполнить базовый DCA: ${config.baseDcaAmount} ₽")
 
                     is Action.Enhanced ->
                         println("Усиленный транш: ${action.amount} ₽")
