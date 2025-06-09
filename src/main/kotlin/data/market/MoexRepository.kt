@@ -36,7 +36,8 @@ class MoexRepository(
             if (!res.isSuccessful) {
                 throw IllegalStateException("HTTP ${res.code}: ${res.message}")
             }
-            return json.parseToJsonElement(res.body!!.string()).jsonObject
+            val responseBody = res.body ?: throw IllegalStateException("Response body is null")
+            return json.parseToJsonElement(responseBody.string()).jsonObject
         }
     }
 }
