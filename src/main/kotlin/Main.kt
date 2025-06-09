@@ -1,5 +1,6 @@
 package org.example
 
+import kotlinx.coroutines.runBlocking
 import java.time.LocalDate
 
 object StrategyConfig {
@@ -80,31 +81,34 @@ object Strategy {
 
 // Пример использования:
 fun main() {
-    val market = MoexClient.fetchMarketData()
-    val portfolio = Portfolio(
-        equity        = 700_000.0,
-        others        = 300_000.0,
-        cushionAmount = 300_000.0  // три месячных потока
-    )
-    val today = LocalDate.of(2025, 6, 10)
+    runBlocking {
+        val market = MoexDataSource.fetchMarketData()
+        val portfolio = Portfolio(
+            equity = 700_000.0,
+            others = 300_000.0,
+            cushionAmount = 300_000.0  // три месячных потока
+        )
+        val today = LocalDate.of(2025, 6, 10)
 
-    // Отобразить статусы фильтров
-    println("Статусы базовых фильтров риска:")
-    Strategy.getFilterStatuses(market, portfolio).forEach { status ->
-        println("${status.name}: ${if (status.passed) "✔" else "✘"}")
-    }
+        // Отобразить статусы фильтров
+        println("Статусы базовых фильтров риска:")
+        Strategy.getFilterStatuses(market, portfolio).forEach { status ->
+            println("${status.name}: ${if (status.passed) "✔" else "✘"}")
+        }
 
-    // Оценить и выполнить действия
-    val actions = Strategy.evaluate(today, market, portfolio)
-    if (actions.isEmpty()) {
-        println("Покупки не требуются")
-    } else {
-        for (action in actions) {
-            when (action) {
-                is Action.Dca       ->
-                    println("Выполнить базовый DCA: ${StrategyConfig.BASE_DCA_AMOUNT} ₽")
-                is Action.Enhanced  ->
-                    println("Усиленный транш: ${action.amount} ₽")
+        // Оценить и выполнить действия
+        val actions = Strategy.evaluate(today, market, portfolio)
+        if (actions.isEmpty()) {
+            println("Покупки не требуются")
+        } else {
+            for (action in actions) {
+                when (action) {
+                    is Action.Dca ->
+                        println("Выполнить базовый DCA: ${StrategyConfig.BASE_DCA_AMOUNT} ₽")
+
+                    is Action.Enhanced ->
+                        println("Усиленный транш: ${action.amount} ₽")
+                }
             }
         }
     }
