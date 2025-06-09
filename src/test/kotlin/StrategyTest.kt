@@ -1,5 +1,5 @@
 import org.example.Strategy
-import org.example.MarketData
+import data.market.MarketData
 import org.example.Portfolio
 import org.example.StrategyConfig
 import org.example.Action
