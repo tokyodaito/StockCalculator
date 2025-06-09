@@ -1,19 +1,31 @@
-package org.example
+package service
 
 import data.market.MarketData
+import service.dto.Action
+import service.dto.FilterStatus
+import service.dto.Portfolio
+import service.dto.StrategyConfig
 import java.time.LocalDate
 
-object Strategy {
+internal object Strategy {
     fun delta(m: MarketData): Double = (m.price - m.max52) / m.max52 * 100.0
 
-    fun enhancedTranche(delta: Double, config: StrategyConfig): Double = when {
-        delta <= -30.0 -> 2.0 * config.baseDcaAmount
-        delta <= -20.0 -> 1.5 * config.baseDcaAmount
-        delta <= -10.0 -> 1.0 * config.baseDcaAmount
-        else -> 0.0
-    }
+    fun enhancedTranche(
+        delta: Double,
+        config: StrategyConfig,
+    ): Double =
+        when {
+            delta <= -30.0 -> 2.0 * config.baseDcaAmount
+            delta <= -20.0 -> 1.5 * config.baseDcaAmount
+            delta <= -10.0 -> 1.0 * config.baseDcaAmount
+            else -> 0.0
+        }
 
-    fun getFilterStatuses(m: MarketData, p: Portfolio, config: StrategyConfig): List<FilterStatus> {
+    fun getFilterStatuses(
+        m: MarketData,
+        p: Portfolio,
+        config: StrategyConfig,
+    ): List<FilterStatus> {
         val techOk = m.price >= m.sma200 || m.rsi14 < 30.0
         val peOk = m.pe <= 6.6
         val dyOk = m.dy >= m.ofzYield + 2.0
@@ -26,10 +38,18 @@ object Strategy {
         )
     }
 
-    fun passRiskFilters(m: MarketData, p: Portfolio, config: StrategyConfig): Boolean =
-        getFilterStatuses(m, p, config).all { it.passed }
+    fun passRiskFilters(
+        m: MarketData,
+        p: Portfolio,
+        config: StrategyConfig,
+    ): Boolean = getFilterStatuses(m, p, config).all { it.passed }
 
-    fun evaluate(date: LocalDate, m: MarketData, p: Portfolio, config: StrategyConfig): List<Action> {
+    fun evaluate(
+        date: LocalDate,
+        m: MarketData,
+        p: Portfolio,
+        config: StrategyConfig,
+    ): List<Action> {
         val actions = mutableListOf<Action>()
         if (date.dayOfMonth == 10) actions.add(Action.Dca)
         val d = delta(m)

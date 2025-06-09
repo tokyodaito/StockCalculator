@@ -6,8 +6,8 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import org.example.di.AppModule
-import org.junit.jupiter.api.Test
+import kotlinx.serialization.json.Json
+import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class MoexClientTest {
@@ -19,7 +19,10 @@ class MoexClientTest {
         server.start()
         System.setProperty("moex.base", server.url("/").toString().removeSuffix("/"))
 
-        val data = AppModule.dataSource.fetchMarketData()
+        val client = OkHttpClient()
+        val repo = MoexRepository(client, Json { ignoreUnknownKeys = true })
+        val dataSource = MoexDataSource(repo)
+        val data = dataSource.fetchMarketData()
 
         server.shutdown()
         assertEquals(2786.16, data.price)

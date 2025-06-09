@@ -1,5 +1,5 @@
-import bot.ChatConfig
-import bot.InMemoryChatConfigRepository
+import data.ChatConfig
+import data.InMemoryChatConfigRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
