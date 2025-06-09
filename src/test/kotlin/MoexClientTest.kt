@@ -1,11 +1,14 @@
 package org.example
 
+import data.market.MoexDataSource
+import data.market.MoexRepository
 import kotlinx.coroutines.runBlocking
+import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import org.example.di.AppModule
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
-import kotlin.toString
 
 class MoexClientTest {
     @Test
@@ -16,7 +19,7 @@ class MoexClientTest {
         server.start()
         System.setProperty("moex.base", server.url("/").toString().removeSuffix("/"))
 
-        val data = MoexDataSource.fetchMarketData()
+        val data = AppModule.dataSource.fetchMarketData()
 
         server.shutdown()
         assertEquals(2786.16, data.price)
