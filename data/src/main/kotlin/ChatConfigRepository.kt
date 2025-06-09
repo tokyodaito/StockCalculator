@@ -1,4 +1,4 @@
-package bot
+package data
 
 interface ChatConfigRepository {
     fun getConfig(chatId: Long): ChatConfig

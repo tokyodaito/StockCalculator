@@ -1,4 +1,4 @@
-package bot
+package data
 
 import java.time.LocalTime
 

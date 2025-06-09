@@ -1,4 +1,4 @@
-package org.example
+package service.dto
 
 data class Portfolio(
     var equity: Double,
