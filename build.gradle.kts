@@ -18,3 +18,7 @@ tasks.named("build") {
 subprojects {
     repositories { mavenCentral() }
 }
+
+application {
+    mainClass.set("app.MainKt")
+}

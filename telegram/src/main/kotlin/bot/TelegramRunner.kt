@@ -7,6 +7,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.telegram.telegrambots.meta.TelegramBotsApi
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession
+import webapp.startWebApp
 import service.DcaService
 import service.di.Runner
 import service.dto.Portfolio
@@ -14,6 +15,7 @@ import service.dto.Portfolio
 class TelegramRunner(
     private val token: String,
     private val username: String,
+    private val webAppUrl: String,
     private val portfolioProvider: () -> Portfolio,
 ) : Runner,
     KoinComponent {
@@ -21,7 +23,8 @@ class TelegramRunner(
     private val service: DcaService by inject()
 
     override fun run(chatId: Long?) {
-        val handler = BotCommandHandler(repository, service)
+        val handler = BotCommandHandler(repository, service, webAppUrl)
+        startWebApp()
         val bot = TelegramBot(token, username, handler, portfolioProvider)
         val api = TelegramBotsApi(DefaultBotSession::class.java)
         api.registerBot(bot)
