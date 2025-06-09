@@ -27,5 +27,6 @@ class MoexClientTest {
         server.shutdown()
         assertEquals(2786.16, data.price)
         assertEquals(3371.06, data.max52)
+        assertEquals(0.272, data.sigma30, 0.001)
     }
 }

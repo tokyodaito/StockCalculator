@@ -7,6 +7,8 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.double
 import kotlinx.serialization.json.int
+import kotlin.math.ln
+import kotlin.math.sqrt
 
 internal object MarketDataSerializer {
 
@@ -31,10 +33,11 @@ internal object MarketDataSerializer {
         val max52 = highs.maxOrNull()!!
         val sma200 = closes.takeLast(200).average()
         val rsi14 = calculateRsi14(closes)
+        val sigma30 = calculateSigma30(closes)
         val pe = 5.7
         val dy = 7.5
         val ofzYield = 15.30
-        return MarketData(price, max52, sma200, rsi14, pe, dy, ofzYield)
+        return MarketData(price, max52, sma200, rsi14, pe, dy, ofzYield, sigma30)
     }
 
     private fun calculateRsi14(closes: List<Double>): Double {
@@ -50,6 +53,14 @@ internal object MarketDataSerializer {
         }
         val rs = if (loss == 0.0) Double.POSITIVE_INFINITY else gain / loss
         return 100 - 100 / (1 + rs)
+    }
+
+    private fun calculateSigma30(closes: List<Double>): Double {
+        require(closes.size >= 31)
+        val returns = closes.takeLast(31).zipWithNext { a, b -> ln(b / a) }
+        val mean = returns.average()
+        val variance = returns.sumOf { (it - mean) * (it - mean) } / (returns.size - 1)
+        return sqrt(variance) * sqrt(252.0)
     }
 }
 
