@@ -1,5 +1,5 @@
 import bot.BotCommandHandler
-import bot.DcaService
+import service.DcaService
 import bot.InMemoryChatConfigRepository
 import kotlinx.coroutines.runBlocking
 import data.market.MarketData
