@@ -9,9 +9,19 @@ import kotlin.test.assertTrue
 class DcaServiceTest {
     @Test
     fun `generate report with actions`() {
-        val md = MarketData(2650.0, 3000.0, 2700.0, 28.0, 6.3, 13.0, 10.5, 0.2)
+        val md = MarketData(
+            price = 2650.0,
+            max52 = 3000.0,
+            sma200 = 2700.0,
+            sma50 = 2750.0,
+            rsi14 = 28.0,
+            pe = 6.3,
+            dy = 13.0,
+            ofzYield = 10.5,
+            cape = 7.0,
+        )
+        val ds = DcaService { md }
         val macro = MacroData(brent = 80.0, keyRate = 10.0, keyRate6mAgo = 11.0)
-        val ds = DcaService({ md }) { macro }
         val portfolio = Portfolio(700_000.0, 300_000.0, 300_000.0)
         val config = StrategyConfig()
         val text =

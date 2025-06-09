@@ -30,15 +30,15 @@ internal object Strategy {
         p: Portfolio,
         config: StrategyConfig,
     ): List<FilterStatus> {
+        val capeOk = m.cape <= 8.0
         val techOk = m.price >= m.sma200 || m.rsi14 < 30.0
-        val peOk = m.pe <= 6.6
-        val dyOk = m.dy >= m.ofzYield + 2.0
-        val cushionOk = p.cushionAmount / config.monthlyFlow >= config.minCushionRatio
+        val crossOk = m.sma50 > m.sma200
+        val cushionOk = p.cushionAmount / config.monthlyFlow >= 3.0
         return listOf(
-            FilterStatus("Технический (P ≥ SMA200 или RSI14 < 30)", techOk),
-            FilterStatus("Оценка P/E ≤ 6,6×", peOk),
-            FilterStatus("Дивдоходность ≥ OFZ-10 + 2 п.п.", dyOk),
-            FilterStatus("Подушка ≥ ${config.minCushionRatio}× месячный поток", cushionOk),
+            FilterStatus("CAPE ≤ 8", capeOk),
+            FilterStatus("Цена ≥ SMA200 или RSI14 < 30", techOk),
+            FilterStatus("Золотой крест", crossOk),
+            FilterStatus("Подушка ≥ 3× месячный поток", cushionOk),
         )
     }
 

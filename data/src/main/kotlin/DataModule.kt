@@ -1,5 +1,7 @@
 package data
 
+import data.market.CapeRepository
+import data.market.HttpCapeRepository
 import data.market.MoexDataSource
 import data.market.MoexRepository
 import data.macro.BrentDataSource
@@ -18,7 +20,8 @@ val dataModule = module {
     }
     single { Json { ignoreUnknownKeys = true } }
     single { MoexRepository(get(), get()) }
-    single { MoexDataSource(get()) }
+    single<CapeRepository> { HttpCapeRepository(get()) }
+    single { MoexDataSource(get(), get()) }
     single { BrentDataSource(get()) }
     single { KeyRateDataSource(get()) }
     single { MacroDataSource(get(), get()) }

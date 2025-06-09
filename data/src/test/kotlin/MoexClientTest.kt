@@ -1,5 +1,6 @@
 package org.example
 
+import data.market.CapeRepository
 import data.market.MoexDataSource
 import data.market.MoexRepository
 import kotlinx.coroutines.runBlocking
@@ -21,12 +22,15 @@ class MoexClientTest {
 
         val client = OkHttpClient()
         val repo = MoexRepository(client, Json { ignoreUnknownKeys = true })
-        val dataSource = MoexDataSource(repo)
+        val capeRepo = object : CapeRepository {
+            override suspend fun fetchCape(): Double = 7.0
+        }
+        val dataSource = MoexDataSource(repo, capeRepo)
         val data = dataSource.fetchMarketData()
 
         server.shutdown()
         assertEquals(2786.16, data.price)
         assertEquals(3371.06, data.max52)
-        assertEquals(0.272, data.sigma30, 0.001)
+        assertEquals(7.0, data.cape, data.sigma30, 0.001)
     }
 }
