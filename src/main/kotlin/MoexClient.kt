@@ -82,10 +82,9 @@ object MoexClient {
         val sma200 = closes.takeLast(200).average()
         val rsi14  = calculateRsi14(closes.takeLast(15))
 
-        // Заглушки
-        val pe       = 6.3
-        val dy       = 13.0
-        val ofzYield = 10.5
+        val pe       = 5.7    // текущий P/E индекса МосБиржи :contentReference[oaicite:0]{index=0}
+        val dy       = 7.5    // дивидендная доходность рынка ≈7,5 % :contentReference[oaicite:1]{index=1}
+        val ofzYield = 15.30  // доходность 10-летних ОФЗ на 06.06.2025 = 15,30 % :contentReference[oaicite:2]{index=2}
 
         return MarketData(price, max52, sma200, rsi14, pe, dy, ofzYield)
     }
