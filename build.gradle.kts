@@ -1,6 +1,8 @@
 plugins {
     kotlin("jvm") version "2.1.20"
     kotlin("plugin.serialization") version "2.1.20"
+    application
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "org.example"
@@ -20,6 +22,14 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+}
+
+application {
+    mainClass.set("org.example.MainKt")
+}
+
+tasks.named("build") {
+    dependsOn("shadowJar")
 }
 
 tasks.test {
