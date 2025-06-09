@@ -3,6 +3,9 @@ package bot
 import kotlinx.coroutines.runBlocking
 import org.telegram.telegrambots.bots.TelegramLongPollingBot
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
+import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo
 import org.telegram.telegrambots.meta.api.objects.Update
 import service.dto.Portfolio
 
@@ -24,7 +27,18 @@ class TelegramBot(
                 runBlocking {
                     handler.handle(chatId, text, portfolioProvider())
                 }
-            val message = SendMessage(chatId.toString(), response)
+            val message = when (response) {
+                is TextResponse -> SendMessage(chatId.toString(), response.text)
+                is WebAppResponse -> {
+                    val button =
+                        InlineKeyboardButton("Open WebApp").apply {
+                            webApp = WebAppInfo(response.url)
+                        }
+                    SendMessage(chatId.toString(), "Запустить WebApp").apply {
+                        replyMarkup = InlineKeyboardMarkup(listOf(listOf(button)))
+                    }
+                }
+            }
             execute(message)
         }
     }

@@ -4,4 +4,4 @@ plugins {
 
 rootProject.name = "StockCalculator"
 
-include("data", "service", "cli", "telegram", "app")
+include("data", "service", "cli", "telegram", "webapp", "app")
