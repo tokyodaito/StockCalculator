@@ -2,6 +2,9 @@ package data
 
 import data.market.MoexDataSource
 import data.market.MoexRepository
+import data.macro.BrentDataSource
+import data.macro.KeyRateDataSource
+import data.macro.MacroDataSource
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import org.koin.dsl.module
@@ -16,5 +19,8 @@ val dataModule = module {
     single { Json { ignoreUnknownKeys = true } }
     single { MoexRepository(get(), get()) }
     single { MoexDataSource(get()) }
+    single { BrentDataSource(get()) }
+    single { KeyRateDataSource(get()) }
+    single { MacroDataSource(get(), get()) }
     single<ChatConfigRepository> { InMemoryChatConfigRepository() }
 }
