@@ -1,4 +1,4 @@
-package org.example
+package service.dto
 
 data class StrategyConfig(
     val monthlyFlow: Double = 100_000.0,

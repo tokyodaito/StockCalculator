@@ -1,7 +1,7 @@
-import service.DcaService
 import data.market.MarketData
-import org.example.Portfolio
-import org.example.StrategyConfig
+import service.DcaService
+import service.dto.Portfolio
+import service.dto.StrategyConfig
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -12,9 +12,10 @@ class DcaServiceTest {
         val ds = DcaService { md }
         val portfolio = Portfolio(700_000.0, 300_000.0, 300_000.0)
         val config = StrategyConfig()
-        val text = kotlinx.coroutines.runBlocking {
-            ds.generateReport(java.time.LocalDate.of(2025, 6, 10), portfolio, config)
-        }
+        val text =
+            kotlinx.coroutines.runBlocking {
+                ds.generateReport(java.time.LocalDate.of(2025, 6, 10), portfolio, config)
+            }
         assertTrue(text.contains("DCA"))
     }
 }

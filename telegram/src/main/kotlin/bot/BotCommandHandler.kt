@@ -1,10 +1,9 @@
 package bot
 
-import data.market.MarketData
-import kotlinx.coroutines.runBlocking
+import data.ChatConfigRepository
 import service.DcaService
-import org.example.Portfolio
-import service.toStrategyConfig
+import service.dto.Portfolio
+import service.utils.toStrategyConfig
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -12,7 +11,12 @@ class BotCommandHandler(
     private val repository: ChatConfigRepository,
     private val dcaService: DcaService,
 ) {
-    suspend fun handle(chatId: Long, text: String, portfolio: Portfolio, date: LocalDate = LocalDate.now()): String {
+    suspend fun handle(
+        chatId: Long,
+        text: String,
+        portfolio: Portfolio,
+        date: LocalDate = LocalDate.now(),
+    ): String {
         val parts = text.trim().split(Regex("\\s+"))
         val command = parts.firstOrNull() ?: return ""
         val arg = parts.getOrNull(1)
@@ -40,16 +44,23 @@ class BotCommandHandler(
                 "Min cushion ratio = $value"
             }
             "/set_report_time" -> {
-                val time = try { LocalTime.parse(arg) } catch (_: Exception) { return "Неверный формат времени" }
+                val time =
+                    try {
+                        LocalTime.parse(arg)
+                    } catch (_: Exception) {
+                        return "Неверный формат времени"
+                    }
                 config.reportTime = time
                 repository.update(chatId, config)
                 "Report time установлен: $time"
             }
             "/show_config" -> {
-                """MONTHLY_FLOW=${config.monthlyFlow.toLong()}
+                """
+                MONTHLY_FLOW=${config.monthlyFlow.toLong()}
 BASE_DCA=${config.baseDcaAmount.toLong()}
 MIN_CUSHION_RATIO=${config.minCushionRatio}
-REPORT_TIME=${config.reportTime}""".trimIndent()
+REPORT_TIME=${config.reportTime}
+                """.trimIndent()
             }
             "/report_now" -> {
                 dcaService.generateReport(date, portfolio, config.toStrategyConfig())

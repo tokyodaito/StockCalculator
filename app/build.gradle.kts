@@ -8,6 +8,7 @@ dependencies {
     implementation(project(":telegram"))
     implementation(project(":service"))
     implementation(project(":data"))
+    implementation("io.insert-koin:koin-core:3.5.3")
 }
 
 application {
