@@ -2,9 +2,6 @@ package org.example
 
 import java.time.LocalDate
 
-import org.example.MoexClient
-
-// Фаза 0: Настройки стратегии (без ребаланса и плеча)
 object StrategyConfig {
     const val MONTHLY_FLOW          = 100_000.0    // ежемесячный приток ₽
     const val BASE_DCA_AMOUNT       = 50_000.0     // базовая сумма DCA (модель 50/50)
