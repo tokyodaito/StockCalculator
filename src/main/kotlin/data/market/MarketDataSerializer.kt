@@ -25,15 +25,35 @@ internal object MarketDataSerializer {
         return Page(closes, highs, total, pageSize)
     }
 
-    fun toMarketData(closes: List<Double>, highs: List<Double>): MarketData {
+    fun parseAnalytics(root: JsonObject): Pair<Double, Double> {
+        val analytics = root["analytics"]!!.jsonObject
+        val cols = analytics["columns"]!!.jsonArray.map { it.jsonPrimitive.content }
+        val idxPe = cols.indexOf("P/E").takeIf { it >= 0 } ?: error("P/E not found")
+        val idxDy = cols.indexOf("YIELD").takeIf { it >= 0 } ?: cols.indexOf("DIVYIELD").takeIf { it >= 0 } ?: error("DY not found")
+        val row = analytics["data"]!!.jsonArray[0].jsonArray
+        val pe = row[idxPe].jsonPrimitive.double
+        val dy = row[idxDy].jsonPrimitive.double
+        return pe to dy
+    }
+
+    fun parseZcyc(root: JsonObject): Double {
+        val zcyc = root["zcyc"]!!.jsonObject
+        val cols = zcyc["columns"]!!.jsonArray.map { it.jsonPrimitive.content }
+        val idxMat = cols.indexOf("MATURITY").takeIf { it >= 0 } ?: error("MATURITY not found")
+        val idxYld = cols.indexOf("YIELD").takeIf { it >= 0 } ?: error("YIELD not found")
+        val targetYear = java.time.LocalDate.now().plusYears(10).year
+        val row = zcyc["data"]!!.jsonArray
+            .map { it.jsonArray }
+            .first { java.time.LocalDate.parse(it[idxMat].jsonPrimitive.content).year == targetYear }
+        return row[idxYld].jsonPrimitive.double
+    }
+
+    fun toMarketData(closes: List<Double>, highs: List<Double>, pe: Double, dy: Double, ofzYield: Double): MarketData {
         require(closes.size >= 200) { "Недостаточно данных: нужно ≥200 закрытий, получено ${closes.size}" }
         val price = closes.last()
         val max52 = highs.maxOrNull()!!
         val sma200 = closes.takeLast(200).average()
         val rsi14 = calculateRsi14(closes)
-        val pe = 5.7
-        val dy = 7.5
-        val ofzYield = 15.30
         return MarketData(price, max52, sma200, rsi14, pe, dy, ofzYield)
     }
 

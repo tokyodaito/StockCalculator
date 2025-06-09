@@ -30,6 +30,26 @@ class MoexRepository(
         makeRequest(url)
     }
 
+    suspend fun fetchAnalytics(): JsonObject = withContext(Dispatchers.IO) {
+        val url = "$baseUrl/engines/stock/markets/index/securities/IMOEX.json".toHttpUrlOrNull()!!
+            .newBuilder()
+            .addQueryParameter("iss.meta", "off")
+            .addQueryParameter("iss.only", "analytics")
+            .build()
+        makeRequest(url)
+    }
+
+    suspend fun fetchZcyc(from: LocalDate, till: LocalDate): JsonObject = withContext(Dispatchers.IO) {
+        val url = "$baseUrl/engines/stock/markets/zcyc.json".toHttpUrlOrNull()!!
+            .newBuilder()
+            .addQueryParameter("iss.meta", "off")
+            .addQueryParameter("iss.only", "zcyc")
+            .addQueryParameter("from", from.toString())
+            .addQueryParameter("till", till.toString())
+            .build()
+        makeRequest(url)
+    }
+
     private fun makeRequest(url: HttpUrl): JsonObject {
         val req = Request.Builder().url(url).build()
         client.newCall(req).execute().use { res ->

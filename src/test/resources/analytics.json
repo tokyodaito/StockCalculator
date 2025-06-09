@@ -1,0 +1,8 @@
+{
+  "analytics": {
+    "columns": ["SECID", "P/E", "YIELD"],
+    "data": [
+      ["IMOEX", 5.7, 7.5]
+    ]
+  }
+}
