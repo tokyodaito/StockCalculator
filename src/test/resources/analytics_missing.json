@@ -1,0 +1,6 @@
+{
+  "analytics": {
+    "columns": ["SECID", "YIELD"],
+    "data": [["IMOEX", 7.5]]
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "dividends": {
+    "columns": ["DIVIDEND"],
+    "data": [[100.0], [50.0]]
+  }
+}
