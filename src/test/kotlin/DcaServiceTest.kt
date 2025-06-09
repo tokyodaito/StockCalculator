@@ -1,4 +1,4 @@
-import bot.DcaService
+import service.DcaService
 import data.market.MarketData
 import org.example.Portfolio
 import org.example.StrategyConfig

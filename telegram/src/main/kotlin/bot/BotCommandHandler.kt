@@ -2,7 +2,9 @@ package bot
 
 import data.market.MarketData
 import kotlinx.coroutines.runBlocking
+import service.DcaService
 import org.example.Portfolio
+import service.toStrategyConfig
 import java.time.LocalDate
 import java.time.LocalTime
 

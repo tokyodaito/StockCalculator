@@ -2,7 +2,9 @@ package bot
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import service.DcaService
 import kotlinx.coroutines.isActive
+import service.toStrategyConfig
 import kotlinx.coroutines.launch
 import org.example.Portfolio
 import java.time.Duration
