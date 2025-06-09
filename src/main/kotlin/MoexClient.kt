@@ -1,113 +1,119 @@
 package org.example
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.*
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.double
-import kotlinx.serialization.json.int
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import java.time.Duration
 import java.time.LocalDate
 
-// Модель рыночных данных
 data class MarketData(
-    val price: Double,    // текущее закрытие
-    val max52: Double,    // максимум за ≈52 недели
-    val sma200: Double,   // 200-дневная SMA
-    val rsi14: Double,    // RSI(14)
-    val pe: Double,       // P/E (заглушка)
-    val dy: Double,       // дивидендная доходность (заглушка)
-    val ofzYield: Double  // доходность ОФЗ-10 (заглушка)
+    val price: Double,
+    val max52: Double,
+    val sma200: Double,
+    val rsi14: Double,
+    val pe: Double,
+    val dy: Double,
+    val ofzYield: Double
 )
 
-object MoexClient {
-    private val client = OkHttpClient()
-    private val json   = Json { ignoreUnknownKeys = true }
+object MoexDataSource {
+    private val client = OkHttpClient.Builder()
+        .callTimeout(Duration.ofSeconds(10))
+        .build()
 
-    fun fetchMarketData(): MarketData {
-        val base  = System.getProperty("moex.base") ?: "https://iss.moex.com/iss"
-        val today = LocalDate.now()
-        // Запрашиваем 365 календарных дней, чтобы гарантированно получить ≥200 торговых дней
-        val from  = today.minusDays(365)
+    private val json = Json { ignoreUnknownKeys = true }
 
-        // Берём сразу обе таблицы: history и history.cursor
-        val histUrl = "$base/history/engines/stock/markets/index/" +
-                "securities/IMOEX.json" +
-                "?from=$from&till=$today" +
-                "&iss.meta=off" +
-                "&iss.only=history,history.cursor"
+    /** Асинхронный метод: возвращает MarketData */
+    suspend fun fetchMarketData(): MarketData = withContext(Dispatchers.IO) {
+        val baseUrl = System.getProperty("moex.base") ?: "https://iss.moex.com/iss"
+        val today   = LocalDate.now()
+        val from    = today.minusDays(365)
 
-        // Первый запрос
-        val firstText = request(histUrl)
-        val firstJson = json.parseToJsonElement(firstText).jsonObject
-
-        // Парсим историю и cursor
-        val historyObj = firstJson["history"]!!.jsonObject
-        val histCols   = historyObj["columns"]!!.jsonArray.map { it.jsonPrimitive.content }
-        val closeIdx   = histCols.indexOf("CLOSE").takeIf { it >= 0 }
-            ?: throw IllegalStateException("Не найдено поле CLOSE в history")
-        val pageData   = historyObj["data"]!!.jsonArray
+        val urlTemplate = "$baseUrl/history/engines/stock/markets/index/securities/IMOEX.json".toHttpUrlOrNull()!!
+            .newBuilder()
+            .addQueryParameter("from",     from.toString())
+            .addQueryParameter("till",     today.toString())
+            .addQueryParameter("iss.meta", "off")
+            .addQueryParameter("iss.only", "history,history.cursor")
 
         val closes = mutableListOf<Double>()
-        closes += pageData.map { it.jsonArray[closeIdx].jsonPrimitive.double }
+        val highs  = mutableListOf<Double>()
+        var start   = 0
+        var total: Int
+        var pageSize: Int
 
-        val cursorObj = firstJson["history.cursor"]!!.jsonObject
-        val cursorRow = cursorObj["data"]!!.jsonArray[0].jsonArray
-        val total     = cursorRow[1].jsonPrimitive.int
-        val pageSize  = cursorRow[2].jsonPrimitive.int
+        do {
+            val url = urlTemplate
+                .setQueryParameter("start", start.toString())
+                .build()
+            val root = makeRequest(url)
 
-        // Догружаем остальные страницы
-        var start = pageSize
-        while (start < total) {
-            val pageText = request("$histUrl&start=$start")
-            val pageJson = json.parseToJsonElement(pageText).jsonObject
-            val pageHist = pageJson["history"]!!.jsonObject["data"]!!.jsonArray
-            closes += pageHist.map { it.jsonArray[closeIdx].jsonPrimitive.double }
-            start += pageSize
-        }
+            val history   = root["history"]!!.jsonObject
+            val columns   = history["columns"]!!.jsonArray.map { it.jsonPrimitive.content }
+            val closeIdx  = columns.indexOf("CLOSE")
+                .takeIf { it >= 0 } ?: error("CLOSE не найден в history.columns")
+            val highIdx   = columns.indexOf("HIGH")
+                .takeIf { it >= 0 } ?: error("HIGH не найден в history.columns")
 
-        // Жёсткие проверки
+            history["data"]!!.jsonArray.forEach { row ->
+                val arr = row.jsonArray
+                closes += arr[closeIdx].jsonPrimitive.double
+                highs  += arr[highIdx].jsonPrimitive.double
+            }
+
+            val cursorRow = root["history.cursor"]!!
+                .jsonObject["data"]!!.jsonArray[0].jsonArray
+            total    = cursorRow[1].jsonPrimitive.int
+            pageSize = cursorRow[2].jsonPrimitive.int
+            start   += pageSize
+        } while (start < total)
+
         require(closes.size >= 200) {
             "Недостаточно данных: нужно ≥200 закрытий, получено ${closes.size}"
         }
-        require(closes.size >= 15)  {
-            "Недостаточно данных: нужно ≥15 точек для RSI14, получено ${closes.size}"
-        }
 
-        // Расчёт метрик
-        val price  = closes.last()
-        val max52  = closes.maxOrNull()
-            ?: throw IllegalStateException("Не удалось вычислить max52")
-        val sma200 = closes.takeLast(200).average()
-        val rsi14  = calculateRsi14(closes.takeLast(15))
+        val price    = closes.last()
+        val max52    = highs.maxOrNull()!!
+        val sma200   = closes.takeLast(200).average()
+        val rsi14    = calculateRsi14(closes)
 
-        val pe       = 5.7    // текущий P/E индекса МосБиржи :contentReference[oaicite:0]{index=0}
-        val dy       = 7.5    // дивидендная доходность рынка ≈7,5 % :contentReference[oaicite:1]{index=1}
-        val ofzYield = 15.30  // доходность 10-летних ОФЗ на 06.06.2025 = 15,30 % :contentReference[oaicite:2]{index=2}
+        // Заглушки
+        val pe       = 5.7
+        val dy       = 7.5
+        val ofzYield = 15.30
 
-        return MarketData(price, max52, sma200, rsi14, pe, dy, ofzYield)
+        MarketData(price, max52, sma200, rsi14, pe, dy, ofzYield)
     }
 
-    private fun request(url: String): String {
+    private fun makeRequest(url: HttpUrl): JsonObject {
         val req = Request.Builder().url(url).build()
         client.newCall(req).execute().use { res ->
-            if (!res.isSuccessful) throw IllegalStateException("HTTP ошибка ${res.code}")
-            return res.body!!.string()
+            if (!res.isSuccessful) {
+                throw IllegalStateException("HTTP ${res.code}: ${res.message}")
+            }
+            return json.parseToJsonElement(res.body!!.string()).jsonObject
         }
     }
 
-    // Жёсткий RSI14 по ровно 15 точкам
+    // RSI14 по алгоритму Wilder
     private fun calculateRsi14(closes: List<Double>): Double {
-        require(closes.size == 15) {
-            "RSI14 ожидает ровно 15 точек, получено ${closes.size}"
+        require(closes.size >= 15) {
+            "RSI14 ожидает ≥15 значений, получено ${closes.size}"
         }
         val diffs   = closes.zipWithNext { prev, next -> next - prev }
-        val gains   = diffs.map { if (it > 0) it else 0.0 }
-        val losses  = diffs.map { if (it < 0) -it else 0.0 }
-        val avgGain = gains.average()
-        val avgLoss = losses.average()
-        val rs      = if (avgLoss == 0.0) Double.POSITIVE_INFINITY else avgGain / avgLoss
-        return 100.0 - 100.0 / (1 + rs)
+        var avgGain = diffs.take(14).map { maxOf(it, 0.0) }.average()
+        var avgLoss = diffs.take(14).map { maxOf(-it, 0.0) }.average()
+        for (i in 14 until diffs.size) {
+            val gain = maxOf(diffs[i], 0.0)
+            val loss = maxOf(-diffs[i], 0.0)
+            avgGain = (avgGain * 13 + gain) / 14
+            avgLoss = (avgLoss * 13 + loss) / 14
+        }
+        val rs = if (avgLoss == 0.0) Double.POSITIVE_INFINITY else avgGain / avgLoss
+        return 100 - 100 / (1 + rs)
     }
 }
