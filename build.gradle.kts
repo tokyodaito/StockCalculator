@@ -15,6 +15,10 @@ tasks.named("build") {
     dependsOn("shadowJar")
 }
 
+application {
+    mainClass.set("app.MainKt")
+}
+
 subprojects {
     repositories { mavenCentral() }
 }

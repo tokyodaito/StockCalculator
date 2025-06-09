@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>InvestBot - Telegram Mini App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--tg-theme-bg-color, #0e1621);
+            color: var(--tg-theme-text-color, #ffffff);
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        .app {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .screen {
+            display: none;
+            flex: 1;
+            padding: 16px;
+            padding-bottom: 80px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .screen-header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 16px 0;
+        }
+
+        .screen-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #5288c1 0%, #6ab3f3 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .screen-header p {
+            font-size: 16px;
+            color: var(--tg-theme-hint-color, #7d8b98);
+        }
+
+        .card {
+            background: var(--tg-theme-secondary-bg-color, #17212b);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #5288c1 0%, #6ab3f3 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 16px;
+        }
+
+        .card-title h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .card-title p {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #7d8b98);
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .status-item {
+            background: var(--tg-theme-bg-color, #0e1621);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .status-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .status-value.positive {
+            color: #4dbd5c;
+        }
+
+        .status-value.negative {
+            color: #f44336;
+        }
+
+        .status-label {
+            font-size: 13px;
+            color: var(--tg-theme-hint-color, #7d8b98);
+        }
+
+        .button {
+            width: 100%;
+            background: var(--tg-theme-button-color, #5288c1);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 12px;
+        }
+
+        .button:active {
+            transform: scale(0.98);
+        }
+
+        .button.secondary {
+            background: var(--tg-theme-secondary-bg-color, #2b3544);
+        }
+
+        .button.success {
+            background: #4dbd5c;
+        }
+
+        .button.warning {
+            background: #f44336;
+        }
+
+        .button.outline {
+            background: transparent;
+            border: 2px solid var(--tg-theme-button-color, #5288c1);
+            color: var(--tg-theme-button-color, #5288c1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .button-group .button {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .input-field {
+            width: 100%;
+            background: var(--tg-theme-bg-color, #0e1621);
+            border: 2px solid var(--tg-theme-hint-color, #2b3544);
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 16px;
+            color: var(--tg-theme-text-color, #ffffff);
+            margin-bottom: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--tg-theme-button-color, #5288c1);
+        }
+
+        .input-label {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #7d8b98);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .progress-bar {
+            background: var(--tg-theme-bg-color, #0e1621);
+            border-radius: 8px;
+            height: 12px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #5288c1 0%, #6ab3f3 100%);
+            height: 100%;
+            transition: width 0.3s ease-out;
+        }
+
+        .list-item {
+            background: var(--tg-theme-bg-color, #0e1621);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .list-item:active {
+            transform: scale(0.98);
+        }
+
+        .list-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            font-size: 20px;
+        }
+
+        .list-icon.success {
+            background: rgba(77, 189, 92, 0.2);
+            color: #4dbd5c;
+        }
+
+        .list-icon.error {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+
+        .list-icon.warning {
+            background: rgba(255, 152, 0, 0.2);
+            color: #ff9800;
+        }
+
+        .list-content {
+            flex: 1;
+        }
+
+        .list-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .list-subtitle {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #7d8b98);
+        }
+
+        .list-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--tg-theme-link-color, #5288c1);
+        }
+
+        .alert {
+            background: var(--tg-theme-secondary-bg-color, #17212b);
+            border-left: 4px solid;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .alert.success {
+            border-color: #4dbd5c;
+        }
+
+        .alert.warning {
+            border-color: #ff9800;
+        }
+
+        .alert.error {
+            border-color: #f44336;
+        }
+
+        .alert-icon {
+            font-size: 24px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .alert-content h3 {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .alert-content p {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #7d8b98);
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .menu-item {
+            background: var(--tg-theme-secondary-bg-color, #17212b);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(82, 136, 193, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .menu-item:active {
+            transform: scale(0.95);
+        }
+
+        .menu-item:active::before {
+            opacity: 1;
+        }
+
+        .menu-emoji {
+            font-size: 36px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .menu-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .menu-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--tg-theme-link-color, #5288c1);
+        }
+
+        .transaction-item {
+            background: var(--tg-theme-secondary-bg-color, #17212b);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .transaction-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .transaction-date {
+            font-size: 13px;
+            color: var(--tg-theme-hint-color, #7d8b98);
+        }
+
+        .transaction-amount {
+            font-size: 16px;
+            font-weight: 700;
+            color: #4dbd5c;
+        }
+
+        .transaction-details {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #7d8b98);
+        }
+
+        .transaction-details em {
+            font-style: normal;
+            color: var(--tg-theme-text-color, #ffffff);
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--tg-theme-bg-color, #0e1621);
+            border-top: 1px solid var(--tg-theme-hint-color, #2b3544);
+            padding: 12px 16px;
+            z-index: 100;
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .nav-item {
+            background: transparent;
+            border: none;
+            padding: 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--tg-theme-hint-color, #7d8b98);
+        }
+
+        .nav-item.active {
+            color: var(--tg-theme-button-color, #5288c1);
+            background: rgba(82, 136, 193, 0.1);
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+        }
+
+        .badge {
+            background: #f44336;
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            position: absolute;
+            top: -4px;
+            right: -4px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title span {
+            margin-right: 8px;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--tg-theme-hint-color, #2b3544);
+            margin: 20px 0;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--tg-theme-hint-color, #2b3544);
+        }
+
+        .checklist-item:last-child {
+            border-bottom: none;
+        }
+
+        .checklist-box {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--tg-theme-hint-color, #5288c1);
+            border-radius: 6px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .checklist-box.checked {
+            background: #4dbd5c;
+            border-color: #4dbd5c;
+            color: white;
+        }
+
+        .model-selector {
+            margin-bottom: 20px;
+        }
+
+        .model-option {
+            background: var(--tg-theme-secondary-bg-color, #17212b);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .model-option.selected {
+            border-color: var(--tg-theme-button-color, #5288c1);
+            background: rgba(82, 136, 193, 0.1);
+        }
+
+        .model-option:active {
+            transform: scale(0.98);
+        }
+
+        @media (max-width: 360px) {
+            .menu-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Экран 1: Приветствие -->
+        <div class="screen active" id="screen-welcome">
+            <div class="screen-header">
+                <h1>InvestBot</h1>
+                <p>Систематичное инвестирование</p>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">🎯</div>
+                    <div class="card-title">
+                        <h2>Добро пожаловать!</h2>
+                        <p>Премия Банка России 2023</p>
+                    </div>
+                </div>
+                
+                <p style="margin-bottom: 16px;">Автоматизированный алгоритм для инвестирования на российском фондовом рынке.</p>
+                
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-value">5</div>
+                        <div class="status-label">Фаз алгоритма</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value">4</div>
+                        <div class="status-label">Фильтра риска</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="section-title"><span>📊</span> Возможности</h3>
+                <div class="list-item">
+                    <div class="list-icon success">📉</div>
+                    <div class="list-content">
+                        <div class="list-title">Отслеживание просадок</div>
+                        <div class="list-subtitle">Автоматические сигналы на -10%, -20%, -30%</div>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div class="list-icon success">🎯</div>
+                    <div class="list-content">
+                        <div class="list-title">Умные фильтры</div>
+                        <div class="list-subtitle">P/E, дивиденды, техника, подушка</div>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div class="list-icon success">📝</div>
+                    <div class="list-content">
+                        <div class="list-title">Дневник сделок</div>
+                        <div class="list-subtitle">Полная история и статистика</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="button" onclick="showScreen('screen-onboarding-1')">
+                Начать настройку
+            </button>
+            <button class="button secondary" onclick="showScreen('screen-about')">
+                Подробнее об алгоритме
+            </button>
+        </div>
+
+        <!-- Экран 2: Онбординг - Подушка -->
+        <div class="screen" id="screen-onboarding-1">
+            <div class="screen-header">
+                <h1>Настройка</h1>
+                <p>Шаг 1 из 3</p>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">🛡️</div>
+                    <div class="card-title">
+                        <h2>Подушка безопасности</h2>
+                        <p>Ваша финансовая защита</p>
+                    </div>
+                </div>
+
+                <label class="input-label">Ежемесячные расходы (₽)</label>
+                <input type="number" class="input-field" placeholder="50000" value="50000" id="monthly-expenses">
+                
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-value" id="min-cushion">150 000 ₽</div>
+                        <div class="status-label">Минимум (3 мес)</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value" id="rec-cushion">300 000 ₽</div>
+                        <div class="status-label">Рекомендуется (6 мес)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert warning">
+                <div class="alert-icon">⚠️</div>
+                <div class="alert-content">
+                    <h3>Важно!</h3>
+                    <p>Без подушки безопасности покупка акций будет заблокирована</p>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="button success" onclick="showScreen('screen-onboarding-2')">
+                    У меня есть
+                </button>
+                <button class="button warning" onclick="showScreen('screen-cushion-help')">
+                    Нужно накопить
+                </button>
+            </div>
+            <button class="button outline" onclick="showScreen('screen-welcome')">
+                Назад
+            </button>
+        </div>
+
+        <!-- Экран 3: Онбординг - Модель -->
+        <div class="screen" id="screen-onboarding-2">
+            <div class="screen-header">
+                <h1>Настройка</h1>
+                <p>Шаг 2 из 3</p>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">💰</div>
+                    <div class="card-title">
+                        <h2>Ежемесячные инвестиции</h2>
+                        <p>Выберите модель распределения</p>
+                    </div>
+                </div>
+
+                <label class="input-label">Сумма в месяц (₽)</label>
+                <input type="number" class="input-field" placeholder="100000" value="100000" id="monthly-invest">
+                
+                <div class="model-selector">
+                    <div class="model-option" onclick="selectModel(this, 'conservative')">
+                        <div class="list-item" style="background: transparent; padding: 0; margin: 0;">
+                            <div class="list-icon success">🛡️</div>
+                            <div class="list-content">
+                                <div class="list-title">Консервативная 40/60</div>
+                                <div class="list-subtitle">40 000₽ DCA / 60 000₽ резерв</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="model-option selected" onclick="selectModel(this, 'balanced')">
+                        <div class="list-item" style="background: transparent; padding: 0; margin: 0;">
+                            <div class="list-icon success">⚖️</div>
+                            <div class="list-content">
+                                <div class="list-title">Сбалансированная 50/50</div>
+                                <div class="list-subtitle">50 000₽ DCA / 50 000₽ резерв</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="model-option" onclick="selectModel(this, 'aggressive')">
+                        <div class="list-item" style="background: transparent; padding: 0; margin: 0;">
+                            <div class="list-icon success">🚀</div>
+                            <div class="list-content">
+                                <div class="list-title">Агрессивная 60/40</div>
+                                <div class="list-subtitle">60 000₽ DCA / 40 000₽ резерв</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="button" onclick="showScreen('screen-onboarding-3')">
+                Далее
+            </button>
+            <button class="button outline" onclick="showScreen('screen-onboarding-1')">
+                Назад
+            </button>
+        </div>
+
+        <!-- Экран 4: Онбординг - Уведомления -->
+        <div class="screen" id="screen-onboarding-3">
+            <div class="screen-header">
+                <h1>Настройка</h1>
+                <p>Шаг 3 из 3</p>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">🔔</div>
+                    <div class="card-title">
+                        <h2>Уведомления</h2>
+                        <p>Когда отправлять сигналы</p>
+                    </div>
+                </div>
+
+                <label class="input-label">Время проверки рынка</label>
+                <input type="time" class="input-field" value="10:00">
+                
+                <h3 class="section-title">Типы уведомлений</h3>
+                
+                <div class="checklist-item">
+                    <div class="checklist-box checked">✓</div>
+                    <div class="list-content">
+                        <div class="list-title">Сигналы на покупку</div>
+                        <div class="list-subtitle">При просадках -10%, -20%, -30%</div>
+                    </div>
+                </div>
+                <div class="checklist-item">
+                    <div class="checklist-box checked">✓</div>
+                    <div class="list-content">
+                        <div class="list-title">DCA-напоминания</div>
+                        <div class="list-subtitle">Каждое 10-е число месяца</div>
+                    </div>
+                </div>
+                <div class="checklist-item">
+                    <div class="checklist-box checked">✓</div>
+                    <div class="list-content">
+                        <div class="list-title">Утренний дайджест</div>
+                        <div class="list-subtitle">Сводка рынка в 9:00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert success">
+                <div class="alert-icon">🎉</div>
+                <div class="alert-content">
+                    <h3>Отлично!</h3>
+                    <p>Настройка завершена. Бот готов к работе!</p>
+                </div>
+            </div>
+
+            <button class="button" onclick="showScreen('screen-main')">
+                Начать работу
+            </button>
+            <button class="button outline" onclick="showScreen('screen-onboarding-2')">
+                Назад
+            </button>
+        </div>
+
+        <!-- Экран 5: Главный экран -->
+        <div class="screen" id="screen-main">
+            <div class="screen-header">
+                <h1>InvestBot</h1>
+                <p>9 июня 2025, понедельник</p>
+            </div>
+
+            <div class="card">
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-value negative">2 847</div>
+                        <div class="status-label">IMOEX (-2.3%)</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value negative">-12.4%</div>
+                        <div class="status-label">Δ от максимума</div>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 41.3%"></div>
+                </div>
+                <p style="text-align: center; color: var(--tg-theme-hint-color, #7d8b98); font-size: 14px;">
+                    До уровня -20%: осталось 7.6 п.п.
+                </p>
+            </div>
+
+            <div class="menu-grid">
+                <div class="menu-item" onclick="showScreen('screen-portfolio')">
+                    <span class="menu-emoji">📊</span>
+                    <div class="menu-title">Портфель</div>
+                    <div class="menu-value">₽1.25M</div>
+                </div>
+                <div class="menu-item" onclick="showScreen('screen-signals')">
+                    <span class="menu-emoji">💰</span>
+                    <div class="menu-title">Сигналы</div>
+                    <div class="menu-value">Ожидание</div>
+                </div>
+                <div class="menu-item" onclick="showScreen('screen-calendar')">
+                    <span class="menu-emoji">📅</span>
+                    <div class="menu-title">DCA</div>
+                    <div class="menu-value">Через 2 дня</div>
+                </div>
+                <div class="menu-item" onclick="showScreen('screen-diary')">
+                    <span class="menu-emoji">📝</span>
+                    <div class="menu-title">Дневник</div>
+                    <div class="menu-value">47 сделок</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="section-title"><span>📈</span> Быстрый статус</h3>
+                <div class="list-item">
+                    <div class="list-icon success">✓</div>
+                    <div class="list-content">
+                        <div class="list-title">Подушка безопасности</div>
+                        <div class="list-subtitle">4.2 месяца расходов</div>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div class="list-icon warning">⏳</div>
+                    <div class="list-content">
+                        <div class="list-title">Ожидание сигнала</div>
+                        <div class="list-subtitle">3 из 4 фильтров пройдено</div>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div class="list-icon success">✓</div>
+                    <div class="list-content">
+                        <div class="list-title">Доля акций</div>
+                        <div class="list-subtitle">72% (в норме: 65-75%)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- далее контент сокращён -->
+    </div>
+
+    <script>
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            const targetScreen = document.getElementById(screenId);
+            if (targetScreen) {
+                targetScreen.classList.add('active');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function setActiveNav(button) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            button.classList.add('active');
+        }
+
+        function selectModel(element, model) {
+            document.querySelectorAll('.model-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            element.classList.add('selected');
+        }
+
+        document.getElementById('monthly-expenses')?.addEventListener('input', function(e) {
+            const expenses = parseInt(e.target.value) || 0;
+            document.getElementById('min-cushion').textContent = (expenses * 3).toLocaleString('ru-RU') + ' ₽';
+            document.getElementById('rec-cushion').textContent = (expenses * 6).toLocaleString('ru-RU') + ' ₽';
+        });
+
+        document.getElementById('monthly-invest')?.addEventListener('input', function(e) {
+            const amount = parseInt(e.target.value) || 0;
+            document.querySelectorAll('.model-option').forEach((option, index) => {
+                const models = [
+                    { dca: 0.4, reserve: 0.6 },
+                    { dca: 0.5, reserve: 0.5 },
+                    { dca: 0.6, reserve: 0.4 }
+                ];
+                const model = models[index];
+                const subtitle = option.querySelector('.list-subtitle');
+                subtitle.textContent = `${(amount * model.dca).toLocaleString('ru-RU')}₽ DCA / ${(amount * model.reserve).toLocaleString('ru-RU')}₽ резерв`;
+            });
+        });
+
+        setTimeout(() => {
+            const badge = document.getElementById('signal-badge');
+            if (badge && Math.random() > 0.7) {
+                badge.style.display = 'block';
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
