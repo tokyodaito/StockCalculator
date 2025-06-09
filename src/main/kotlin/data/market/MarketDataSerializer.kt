@@ -1,26 +1,26 @@
 package data.market
 
-import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.double
 import kotlinx.serialization.json.int
 
 internal object MarketDataSerializer {
 
-    fun parsePage(root: JsonObject): Page {
-        val history = root["history"]!!.jsonObject
-        val columns = history["columns"]!!.jsonArray.map { it.jsonPrimitive.content }
+    fun parsePage(root: MarketPageResponse): Page {
+        val columns = root.history.columns
         val closeIdx = columns.indexOf("CLOSE").takeIf { it >= 0 } ?: error("CLOSE не найден")
         val highIdx = columns.indexOf("HIGH").takeIf { it >= 0 } ?: error("HIGH не найден")
 
-        val closes = history["data"]!!.jsonArray.map { it.jsonArray[closeIdx].jsonPrimitive.double }
-        val highs = history["data"]!!.jsonArray.map { it.jsonArray[highIdx].jsonPrimitive.double }
+        val closes = root.history.data.map { it[closeIdx].jsonPrimitive.double }
+        val highs = root.history.data.map { it[highIdx].jsonPrimitive.double }
 
-        val cursorRow = root["history.cursor"]!!.jsonObject["data"]!!.jsonArray[0].jsonArray
-        val total = cursorRow[1].jsonPrimitive.int
-        val pageSize = cursorRow[2].jsonPrimitive.int
+        val cursorRow = root.cursor.data.first()
+        val total = cursorRow[1]
+        val pageSize = cursorRow[2]
 
         return Page(closes, highs, total, pageSize)
     }
@@ -54,4 +54,21 @@ internal object MarketDataSerializer {
 }
 
 internal data class Page(val closes: List<Double>, val highs: List<Double>, val total: Int, val pageSize: Int)
+
+@Serializable
+internal data class MarketPageResponse(
+    val history: DataSet,
+    @SerialName("history.cursor") val cursor: CursorSet
+)
+
+@Serializable
+internal data class DataSet(
+    val columns: List<String>,
+    val data: List<List<JsonElement>>
+)
+
+@Serializable
+internal data class CursorSet(
+    val data: List<List<Int>>
+)
 

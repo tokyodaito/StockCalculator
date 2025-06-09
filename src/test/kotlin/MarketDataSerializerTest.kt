@@ -1,5 +1,6 @@
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
+import data.market.MarketPageResponse
+import kotlinx.serialization.decodeFromString
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -13,7 +14,7 @@ class MarketDataSerializerTest {
 
     @Test
     fun parsePage() {
-        val root = json.parseToJsonElement(loadHistory()).jsonObject
+        val root = json.decodeFromString<MarketPageResponse>(loadHistory())
         val page = MarketDataSerializer.parsePage(root)
         assertEquals(256, page.closes.size)
         assertEquals(3192.38, page.closes.first())
@@ -24,7 +25,7 @@ class MarketDataSerializerTest {
 
     @Test
     fun toMarketData() {
-        val root = json.parseToJsonElement(loadHistory()).jsonObject
+        val root = json.decodeFromString<MarketPageResponse>(loadHistory())
         val page = MarketDataSerializer.parsePage(root)
         val data = MarketDataSerializer.toMarketData(page.closes, page.highs)
         assertEquals(2786.16, data.price)

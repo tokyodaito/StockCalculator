@@ -1,43 +1,41 @@
 package data.market
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import java.time.Duration
+import okhttp3.MediaType.Companion.toMediaType
+import retrofit2.Retrofit
+import retrofit2.http.GET
+import retrofit2.http.Query
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.time.LocalDate
 
 class MoexRepository(
-    private val client: OkHttpClient,
-    private val json: Json,
+    client: OkHttpClient,
+    json: Json,
 ) {
+    private val service: MoexService
     private val baseUrl: String = System.getProperty("moex.base") ?: "https://iss.moex.com/iss"
 
-    suspend fun fetchPage(from: LocalDate, till: LocalDate, start: Int): JsonObject = withContext(Dispatchers.IO) {
-        val url = "$baseUrl/history/engines/stock/markets/index/securities/IMOEX.json".toHttpUrlOrNull()!!
-            .newBuilder()
-            .addQueryParameter("from", from.toString())
-            .addQueryParameter("till", till.toString())
-            .addQueryParameter("iss.meta", "off")
-            .addQueryParameter("iss.only", "history,history.cursor")
-            .addQueryParameter("start", start.toString())
+    init {
+        val retrofit = Retrofit.Builder()
+            .baseUrl("$baseUrl/")
+            .client(client)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
-        makeRequest(url)
+        service = retrofit.create(MoexService::class.java)
     }
 
-    private fun makeRequest(url: HttpUrl): JsonObject {
-        val req = Request.Builder().url(url).build()
-        client.newCall(req).execute().use { res ->
-            if (!res.isSuccessful) {
-                throw IllegalStateException("HTTP ${res.code}: ${res.message}")
-            }
-            val responseBody = res.body ?: throw IllegalStateException("Response body is null")
-            return json.parseToJsonElement(responseBody.string()).jsonObject
-        }
-    }
+    internal suspend fun fetchPage(from: LocalDate, till: LocalDate, start: Int): MarketPageResponse =
+        service.history(from.toString(), till.toString(), start)
+}
+
+private interface MoexService {
+    @GET("history/engines/stock/markets/index/securities/IMOEX.json")
+    suspend fun history(
+        @Query("from") from: String,
+        @Query("till") till: String,
+        @Query("start") start: Int,
+        @Query("iss.meta") meta: String = "off",
+        @Query("iss.only") only: String = "history,history.cursor",
+    ): MarketPageResponse
 }
