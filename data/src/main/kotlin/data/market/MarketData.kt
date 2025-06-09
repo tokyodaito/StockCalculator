@@ -7,5 +7,7 @@ data class MarketData(
     val rsi14: Double,
     val pe: Double,
     val dy: Double,
-    val ofzYield: Double
+    val ofzYield: Double,
+    val sigma30: Double,
 )
+
