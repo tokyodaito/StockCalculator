@@ -1,6 +1,8 @@
 package org.example
 
+import data.market.MarketData
 import kotlinx.coroutines.runBlocking
+import org.example.di.AppModule
 import java.time.LocalDate
 
 object StrategyConfig {
@@ -82,7 +84,7 @@ object Strategy {
 // Пример использования:
 fun main() {
     runBlocking {
-        val market = MoexDataSource.fetchMarketData()
+        val market = AppModule.dataSource.fetchMarketData()
         val portfolio = Portfolio(
             equity = 700_000.0,
             others = 300_000.0,
