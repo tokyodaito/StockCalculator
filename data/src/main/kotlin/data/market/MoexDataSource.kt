@@ -3,7 +3,8 @@ package data.market
 import java.time.LocalDate
 
 class MoexDataSource(
-     val repository: MoexRepository,
+    private val repository: MoexRepository,
+    private val capeRepository: CapeRepository,
 ) {
     suspend fun fetchMarketData(): MarketData {
         val today = LocalDate.now()
@@ -22,6 +23,7 @@ class MoexDataSource(
             pageSize = page.pageSize
             start += pageSize
         } while (start < total)
-        return MarketDataSerializer.toMarketData(closes, highs)
+        val cape = capeRepository.fetchCape()
+        return MarketDataSerializer.toMarketData(closes, highs, cape)
     }
 }
