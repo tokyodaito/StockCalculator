@@ -9,11 +9,22 @@ import kotlin.test.assertTrue
 class StrategyFilterTest {
     @Test
     fun `filters all passed`() {
-        val md = MarketData(2800.0, 3000.0, 2700.0, 2760.0, 25.0, 6.0, 13.0, 10.0, 7.0)
-        val p = Portfolio(1_000_000.0, 300_000.0, 300_000.0)
+        val md =
+            MarketData(
+                price = 2800.0,
+                max52 = 3000.0,
+                sma200 = 2700.0,
+                sma50 = 2760.0,
+                rsi14 = 25.0,
+                pe = 6.0,
+                dy = 13.0,
+                ofzYield = 10.0,
+                sigma30 = 7.0,
+            )
+        val p = Portfolio(equity = 1_000_000.0, others = 300_000.0, cushionAmount = 300_000.0)
         val cfg = StrategyConfig()
-        assertTrue(Strategy.passRiskFilters(md, p, cfg))
+        assertTrue(Strategy.passRiskFilters(marketData = md, portfolio = p, config = cfg))
         val bad = md.copy(cape = 9.0)
-        assertFalse(Strategy.passRiskFilters(bad, p, cfg))
+        assertFalse(Strategy.passRiskFilters(marketData = bad, portfolio = p, config = cfg))
     }
 }
