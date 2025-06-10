@@ -16,7 +16,6 @@ class StrategyFilterTest {
                 sma200 = 2700.0,
                 sma50 = 2760.0,
                 rsi14 = 25.0,
-                pe = 6.0,
                 dy = 13.0,
                 ofzYield = 10.0,
                 sigma30 = 7.0,

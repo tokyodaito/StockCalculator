@@ -1,5 +1,7 @@
 package service.dto
 
+import data.market.MarketData
+
 internal sealed class Action {
     object Dca : Action()
 
@@ -11,4 +13,9 @@ internal sealed class Action {
 internal data class FilterStatus(
     val name: String,
     val passed: Boolean,
+)
+
+internal data class Filters(
+    val marketData: MarketData,
+    val filterStatuses: List<FilterStatus>,
 )

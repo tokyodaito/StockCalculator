@@ -3,15 +3,12 @@ package data.market
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.double
-import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonPrimitive
 import kotlin.math.ln
 import kotlin.math.sqrt
 
 internal object MarketDataSerializer {
-
     fun parsePage(root: MarketPageResponse): Page {
         val columns = root.history.columns
         val closeIdx = columns.indexOf("CLOSE").takeIf { it >= 0 } ?: error("CLOSE не найден")
@@ -27,7 +24,11 @@ internal object MarketDataSerializer {
         return Page(closes, highs, total, pageSize)
     }
 
-    fun toMarketData(closes: List<Double>, highs: List<Double>, cape: Double): MarketData {
+    fun toMarketData(
+        closes: List<Double>,
+        highs: List<Double>,
+        cape: Double,
+    ): MarketData {
         require(closes.size >= 200) { "Недостаточно данных: нужно ≥200 закрытий, получено ${closes.size}" }
         val price = closes.last()
         val max52 = highs.maxOrNull()!!
@@ -35,10 +36,15 @@ internal object MarketDataSerializer {
         val sma50 = closes.takeLast(50).average()
         val rsi14 = calculateRsi14(closes)
         val sigma30 = calculateSigma30(closes)
-        val pe = 5.7
-        val dy = 7.5
-        val ofzYield = 15.30
-        return MarketData(price, max52, sma200, sma50, rsi14, pe, dy, ofzYield, sigma30, cape)
+        return MarketData(
+            price = price,
+            max52 = max52,
+            sma200 = sma200,
+            sma50 = sma50,
+            rsi14 = rsi14,
+            sigma30 = sigma30,
+            cape = cape,
+        )
     }
 
     private fun calculateRsi14(closes: List<Double>): Double {
@@ -65,22 +71,26 @@ internal object MarketDataSerializer {
     }
 }
 
-internal data class Page(val closes: List<Double>, val highs: List<Double>, val total: Int, val pageSize: Int)
+internal data class Page(
+    val closes: List<Double>,
+    val highs: List<Double>,
+    val total: Int,
+    val pageSize: Int,
+)
 
 @Serializable
 internal data class MarketPageResponse(
     val history: DataSet,
-    @SerialName("history.cursor") val cursor: CursorSet
+    @SerialName("history.cursor") val cursor: CursorSet,
 )
 
 @Serializable
 internal data class DataSet(
     val columns: List<String>,
-    val data: List<List<JsonElement>>
+    val data: List<List<JsonElement>>,
 )
 
 @Serializable
 internal data class CursorSet(
-    val data: List<List<Int>>
+    val data: List<List<Int>>,
 )
-

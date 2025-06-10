@@ -69,7 +69,7 @@ class DcaService(
                 add("price=${market.price}, Δ=${"%.1f".format(Strategy.delta(market))}%")
                 add("Уровень риска: ${corridor.riskLevel}")
                 add("Коридор акций: ${corridor.percentageStocks}")
-                addAll(filters.map { "${it.name}: ${if (it.passed) "✔" else "✘"}" })
+                addAll(filters.filterStatuses.map { "${it.name}: ${if (it.passed) "✔" else "✘"}" })
                 if (actions.isEmpty()) add("Покупки не требуются")
                 actions.forEach { action ->
                     when (action) {

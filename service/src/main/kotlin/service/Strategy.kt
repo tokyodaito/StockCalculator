@@ -3,6 +3,7 @@ package service
 import data.market.MarketData
 import service.dto.Action
 import service.dto.FilterStatus
+import service.dto.Filters
 import service.dto.Portfolio
 import service.dto.StrategyConfig
 import java.time.LocalDate
@@ -30,16 +31,20 @@ internal object Strategy {
         marketData: MarketData,
         portfolio: Portfolio,
         config: StrategyConfig,
-    ): List<FilterStatus> {
+    ): Filters {
         val capeOk = marketData.cape <= 8.0
         val techOk = marketData.price >= marketData.sma200 || marketData.rsi14 < 30.0
         val crossOk = marketData.sma50 > marketData.sma200
         val cushionOk = portfolio.cushionAmount / config.monthlyFlow >= 3.0
-        return listOf(
-            FilterStatus("CAPE ≤ 8", capeOk),
-            FilterStatus("Цена ≥ SMA200 или RSI14 < 30", techOk),
-            FilterStatus("Золотой крест", crossOk),
-            FilterStatus("Подушка ≥ 3× месячный поток", cushionOk),
+        return Filters(
+            marketData = marketData,
+            filterStatuses =
+                listOf(
+                    FilterStatus("CAPE ≤ 8", capeOk),
+                    FilterStatus("Цена ≥ SMA200 или RSI14 < 30", techOk),
+                    FilterStatus("Золотой крест", crossOk),
+                    FilterStatus("Подушка ≥ 3× месячный поток", cushionOk),
+                ),
         )
     }
 
@@ -47,7 +52,7 @@ internal object Strategy {
         marketData: MarketData,
         portfolio: Portfolio,
         config: StrategyConfig,
-    ): Boolean = getFilterStatuses(marketData, portfolio, config).all { it.passed }
+    ): Boolean = getFilterStatuses(marketData, portfolio, config).filterStatuses.all { it.passed }
 
     fun evaluate(
         date: LocalDate,

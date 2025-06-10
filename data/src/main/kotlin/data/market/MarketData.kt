@@ -6,10 +6,6 @@ data class MarketData(
     val sma200: Double,
     val sma50: Double,
     val rsi14: Double,
-    val pe: Double,
-    val dy: Double,
-    val ofzYield: Double,
     val sigma30: Double,
-    val cape: Double
+    val cape: Double,
 )
-
