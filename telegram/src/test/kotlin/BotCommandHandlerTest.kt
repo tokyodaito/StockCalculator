@@ -17,18 +17,17 @@ class BotCommandHandlerTest {
         runBlocking {
             val repo = InMemoryChatConfigRepository()
             val ds =
-                DcaService {
+                DcaService({
                     MarketData(
                         price = 1.0,
                         max52 = 1.0,
                         sma200 = 1.0,
                         sma50 = 1.0,
                         rsi14 = 1.0,
-                        dy = 1.0,
-                        ofzYield = 1.0,
                         sigma30 = 1.0,
+                        cape = 1.0,
                     )
-                }
+                }) { MacroData(70.0, 10.0, 9.5) }
             val handler = BotCommandHandler(repo, ds, "http://localhost")
             val portfolio = Portfolio(0.0, 0.0, 0.0)
             handler.handle(1, "/set_monthly_flow 150000", portfolio)
@@ -46,11 +45,10 @@ class BotCommandHandlerTest {
                     sma200 = 2700.0,
                     sma50 = 2750.0,
                     rsi14 = 28.0,
-                    dy = 13.0,
-                    ofzYield = 10.5,
                     sigma30 = 7.0,
+                    cape = 7.0,
                 )
-            val ds = DcaService { md }
+            val ds = DcaService({ md }) { MacroData(70.0, 10.0, 9.5) }
             val handler = BotCommandHandler(repo, ds, "http://localhost")
             val portfolio = Portfolio(700_000.0, 300_000.0, 300_000.0)
             val text = handler.handle(1, "/report_now", portfolio) as TextResponse
@@ -61,7 +59,15 @@ class BotCommandHandlerTest {
     fun `open webapp returns webapp response`() =
         runBlocking {
             val repo = InMemoryChatConfigRepository()
-            val md = MarketData(2650.0, 3000.0, 2700.0, 28.0, 6.3, 13.0, 10.5, 0.2)
+            val md = MarketData(
+                price = 2650.0,
+                max52 = 3000.0,
+                sma200 = 2700.0,
+                sma50 = 2800.0,
+                rsi14 = 28.0,
+                sigma30 = 6.3,
+                cape = 7.0,
+            )
             val ds = DcaService({ md }) { MacroData(70.0, 10.0, 9.5) }
             val handler = BotCommandHandler(repo, ds, "http://localhost")
             val portfolio = Portfolio(0.0, 0.0, 0.0)
