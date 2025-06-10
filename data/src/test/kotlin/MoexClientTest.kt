@@ -29,8 +29,8 @@ class MoexClientTest {
         val data = dataSource.fetchMarketData()
 
         server.shutdown()
-        assertEquals(2786.16, data.price)
-        assertEquals(3371.06, data.max52)
-        assertEquals(7.0, data.cape, data.sigma30, 0.001)
+        assertEquals(2786.16, data.price, 0.01)
+        assertEquals(3371.06, data.max52, 0.01)
+        assertEquals(7.0, data.cape, 0.001)
     }
 }
