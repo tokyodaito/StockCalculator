@@ -16,12 +16,11 @@ class DcaServiceTest {
                 sma200 = 2700.0,
                 sma50 = 2750.0,
                 rsi14 = 28.0,
-                dy = 13.0,
-                ofzYield = 10.5,
+                sigma30 = 7.0,
                 cape = 7.0,
             )
-        val ds = DcaService { md }
         val macro = MacroData(brent = 80.0, keyRate = 10.0, keyRate6mAgo = 11.0)
+        val ds = DcaService({ md }) { macro }
         val portfolio = Portfolio(700_000.0, 300_000.0, 300_000.0)
         val config = StrategyConfig()
         val text =

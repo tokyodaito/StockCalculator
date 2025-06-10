@@ -17,12 +17,13 @@ private const val CapeUrl = "https://capital-gain.ru/data/IMOEX_FUNDAMENTALS.jso
 class CapeRepositoryImpl(
     private val client: OkHttpClient,
     private val json: Json,
+    private val baseUrl: String = CapeUrl,
 ) : CapeRepository {
     override suspend fun fetchCape(): Double =
         withContext(Dispatchers.IO) {
             val body =
-                if (CapeUrl.startsWith("file:")) {
-                    val uri = URI(CapeUrl)
+                if (baseUrl.startsWith("file:")) {
+                    val uri = URI(baseUrl)
                     Files.readString(
                         java.nio.file.Path
                             .of(uri),
@@ -31,7 +32,7 @@ class CapeRepositoryImpl(
                     val request =
                         Request
                             .Builder()
-                            .url(CapeUrl)
+                            .url(baseUrl)
                             .header("Accept", "application/json")
                             .build()
                     client.newCall(request).execute().use { it.body?.string() ?: error("empty body") }
